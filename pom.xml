@@ -22,9 +22,10 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.gillius</groupId>
-      <artifactId>jfxutils</artifactId>
-      <version>1.0</version>
+      <groupId>jfree</groupId>
+      <artifactId>jfreechart</artifactId>
+      <version>1.0.13</version>
     </dependency>
+
   </dependencies>
 </project>
