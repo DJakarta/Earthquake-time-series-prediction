@@ -28,6 +28,10 @@ public class HttpRequest {
   public HttpRequest(String url, String method, Map<String, String> headers) {
     this(url, method, headers, null);
   }
+  
+  public HttpRequest(String url, String method) {
+    this(url, method, new Hashtable<String, String>());
+  }
 
   public HttpResponse send() {
     HttpURLConnection connection = null;
