@@ -1,6 +1,7 @@
 package eu.djakarta.tsEarthquake;
 
 import java.awt.BorderLayout;
+import java.util.List;
 
 import javax.swing.JFrame;
 
@@ -13,6 +14,10 @@ import org.jfree.data.xy.XYBarDataset;
 
 public class App {
   public static void main(String[] args) {
+    EventDatabase database = new XmlEventDatabase("src/main/resources/database.xml");
+    List<Event> eventList = database.getEventList();
+    System.out.println("Loaded " + eventList.size() + " events from the database.");
+    EventSet set = new EventSet(eventList);
     App.example();
   }
 
