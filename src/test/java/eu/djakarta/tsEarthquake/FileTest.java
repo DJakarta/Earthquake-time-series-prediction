@@ -12,7 +12,7 @@ public class FileTest {
   @Test
   public void fileDownloadTest() {
     String server = "http://service.iris.edu/fdsnws/event/1/query?";
-    String query = "eventid=609301";
+    String query = "minmagnitude=8.5";
 
     /* TODO implement response progress; the server returns the length of the
      * page in response headers */
