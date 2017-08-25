@@ -17,6 +17,10 @@ import org.jfree.data.xy.XYBarDataset;
 
 public class App {
   public static void main(String[] args) {
+    App.example();
+  }
+  
+  public static void example() {
     JFrame frame = new JFrame("Chart");
 
     double[][] data = App.sampleData();
