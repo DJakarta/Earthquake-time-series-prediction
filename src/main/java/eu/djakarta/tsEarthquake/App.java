@@ -1,12 +1,8 @@
 package eu.djakarta.tsEarthquake;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -19,7 +15,7 @@ public class App {
   public static void main(String[] args) {
     App.example();
   }
-  
+
   public static void example() {
     JFrame frame = new JFrame("Chart");
 
