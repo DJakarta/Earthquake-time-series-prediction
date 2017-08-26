@@ -23,7 +23,6 @@ public class XmlEventDatabase implements EventDatabase {
 
   @Override
   public List<Event> getEventList() {
-    /* TODO implement getEventList */
     SAXParserFactory factory = SAXParserFactory.newInstance();
     SAXParser saxParser;
     try {

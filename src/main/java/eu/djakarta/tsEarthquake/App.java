@@ -1,54 +1,50 @@
 package eu.djakarta.tsEarthquake;
 
-import java.awt.BorderLayout;
 import java.util.List;
 
-import javax.swing.JFrame;
-
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.xy.XYBarDataset;
 
 public class App {
+  public static MainWindow window;
+  public static EventSet databaseEventSet;
+  public static EventDatabase database;
+  public static JFreeChart mainChart;
+
   public static void main(String[] args) {
-    EventDatabase database = new XmlEventDatabase("src/main/resources/database.xml");
+    App.database = new XmlEventDatabase("src/main/resources/database.xml");
     List<Event> eventList = database.getEventList();
     System.out.println("Loaded " + eventList.size() + " events from the database.");
-    EventSet set = new EventSet(eventList);
-    App.example();
+
+    App.databaseEventSet = new EventSet(eventList);
+    App.loadDatabaseEvents();
+    App.styleMainChart();
+
+    App.window = new MainWindow();
+    App.window.display();
   }
 
-  public static void example() {
-    JFrame frame = new JFrame("Chart");
+  private static void loadDatabaseEvents() {
+    XYBarDataset databaseDataset = new XYBarDataset(databaseEventSet.getXYDataset(), 0.9);
 
-    double[][] data = App.sampleData();
-    DefaultXYDataset defaultXYDataset = new DefaultXYDataset();
-    defaultXYDataset.addSeries(0, data);
-    XYBarDataset xyBarDataset = new XYBarDataset(defaultXYDataset, 0.5);
+    App.mainChart = ChartFactory.createXYBarChart("Events in database", null, false, null,
+        databaseDataset, PlotOrientation.VERTICAL, false, true, false);
 
-    JFreeChart chart1 = ChartFactory.createXYBarChart("Test Chart", "X", false, "Y", xyBarDataset,
-        PlotOrientation.VERTICAL, false, false, false);
-    JFreeChart chart2 = ChartFactory.createXYBarChart("Test Chart E", "X", false, "Y", xyBarDataset,
-        PlotOrientation.VERTICAL, false, false, false);
-    frame.getContentPane().add(new ChartPanel(chart1), BorderLayout.WEST);
-    frame.getContentPane().add(new ChartPanel(chart2), BorderLayout.EAST);
-    frame.pack();
-    frame.setVisible(true);
+    XYPlot mainPlot = (XYPlot) App.mainChart.getPlot();
+    /* DateAxis axis = (DateAxis) mainPlot.getDomainAxis();
+     * axis.setDateFormatOverride(new SimpleDateFormat("ddhhmmss")); */
+    mainPlot.getRenderer().setBaseToolTipGenerator(new MainWindow.MainChartToolTipGenerator());
   }
 
-  public static double[][] sampleData() {
-    double[][] data = new double[2][50];
-    for (int i = 0; i < 50; i++) {
-      if (i < 20) {
-        data[0][i] = 2 * i;
-      } else {
-        data[0][i] = i;
-      }
-      data[1][i] = i * i;
-    }
-    return data;
+  private static void styleMainChart() {
+    XYBarRenderer barRenderer = new XYBarRenderer();
+    barRenderer.setShadowVisible(false);
+    XYPlot plot = (XYPlot) mainChart.getPlot();
+    /* barRenderer.setSeriesPaint(0, Color.blue); */
+    plot.setRenderer(0, barRenderer);
   }
 }
