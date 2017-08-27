@@ -1,11 +1,18 @@
 package eu.djakarta.tsEarthquake;
 
+import java.awt.Color;
+import java.awt.Paint;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.StandardBarPainter;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.xy.XYBarDataset;
 
@@ -21,30 +28,40 @@ public class App {
     System.out.println("Loaded " + eventList.size() + " events from the database.");
 
     App.databaseEventSet = new EventSet(eventList);
-    App.loadDatabaseEvents();
+    App.loadDatabaseEventsInMainChart();
     App.styleMainChart();
 
     App.window = new MainWindow();
     App.window.display();
   }
 
-  private static void loadDatabaseEvents() {
-    XYBarDataset databaseDataset = new XYBarDataset(databaseEventSet.getXYDataset(), 0.9);
+  private static void loadDatabaseEventsInMainChart() {
+    XYBarDataset databaseDataset =
+        new XYBarDataset(App.databaseEventSet.getXYDataset(), 24 * 60 * 60 * 1000 * 0.8);
 
-    App.mainChart = ChartFactory.createXYBarChart("Events in database", null, false, null,
+    App.mainChart = ChartFactory.createXYBarChart("Events in the database", null, true, null,
         databaseDataset, PlotOrientation.VERTICAL, false, true, false);
 
     XYPlot mainPlot = (XYPlot) App.mainChart.getPlot();
-    /* DateAxis axis = (DateAxis) mainPlot.getDomainAxis();
-     * axis.setDateFormatOverride(new SimpleDateFormat("ddhhmmss")); */
+    DateAxis axis = (DateAxis) mainPlot.getDomainAxis();
+    axis.setDateFormatOverride(new SimpleDateFormat("YY-MM-dd-hh-mm"));
     mainPlot.getRenderer().setBaseToolTipGenerator(new MainWindow.MainChartToolTipGenerator());
+    mainPlot.setDomainPannable(true);
   }
 
   private static void styleMainChart() {
-    XYBarRenderer barRenderer = new XYBarRenderer();
-    barRenderer.setShadowVisible(false);
+    Paint backgroundPaint = Color.BLACK;
+    App.mainChart.setBackgroundPaint(backgroundPaint);
+    Color titleColor = new Color(50, 50, 30);
+    App.mainChart.getTitle().setPaint(titleColor);
+
     XYPlot plot = (XYPlot) mainChart.getPlot();
-    /* barRenderer.setSeriesPaint(0, Color.blue); */
-    plot.setRenderer(0, barRenderer);
+    plot.setBackgroundPaint(backgroundPaint);
+    XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
+    renderer.setShadowVisible(false);
+    StandardXYBarPainter barPainter = new StandardXYBarPainter();
+    Color barPaint = new Color(100, 100, 60);
+    renderer.setSeriesPaint(0, barPaint);
+    renderer.setBarPainter(barPainter);
   }
 }

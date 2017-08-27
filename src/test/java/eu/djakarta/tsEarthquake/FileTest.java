@@ -12,7 +12,7 @@ public class FileTest {
   @Test
   public void fileDownloadTest() {
     String server = "http://service.iris.edu/fdsnws/event/1/query?";
-    String query = "minmagnitude=8.5";
+    String query = "minmagnitude=5.2&starttime=2016-01-01&endtime=2017-08-26";
 
     /* TODO implement response progress; the server returns the length of the
      * page in response headers */

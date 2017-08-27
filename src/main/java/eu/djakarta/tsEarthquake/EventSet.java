@@ -33,7 +33,8 @@ public class EventSet {
     TimeSeries timeSeries = new TimeSeries("databaseEvents");
 
     for (Event event : this.timeAscendingList) {
-      timeSeries.add(new Day(event.time), event.magnitude);
+      /* TODO check if day already exists and get the event with the largest magnitude if so */
+      timeSeries.addOrUpdate(new Day(event.time), event.magnitude);
     }
     TimeSeriesCollection dataset = new TimeSeriesCollection();
     dataset.addSeries(timeSeries);
