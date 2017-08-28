@@ -3,8 +3,11 @@ package eu.djakarta.tsEarthquake;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.bind.DatatypeConverter;
+
+import org.jfree.data.time.Day;
 
 public class Event {
   public final double magnitude;
@@ -19,6 +22,18 @@ public class Event {
     this.latitude = latitude;
     this.longitude = longitude;
     this.depth = depth;
+  }
+
+  public boolean sameDay(Event event) {
+    return new Day(this.time).equals(new Day(event.time));
+  }
+
+  public int daysDifference(Event event) {
+    Day dayThis = new Day(this.time);
+    Day dayOther = new Day(event.time);
+    long millisecondDifference = dayThis.getFirstMillisecond() - dayOther.getFirstMillisecond();
+    int difference = (int) TimeUnit.DAYS.convert(millisecondDifference, TimeUnit.MILLISECONDS);
+    return difference;
   }
 
   @Override

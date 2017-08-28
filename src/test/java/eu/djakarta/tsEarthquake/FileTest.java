@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Date;
 
 import org.junit.Test;
 
@@ -12,7 +13,7 @@ public class FileTest {
   @Test
   public void fileDownloadTest() {
     String server = "http://service.iris.edu/fdsnws/event/1/query?";
-    String query = "minmagnitude=5.2&starttime=2016-01-01&endtime=2017-08-26";
+    String query = "minmagnitude=5.1&starttime=2017-08-20&endtime=2017-08-29";
 
     /* TODO implement response progress; the server returns the length of the
      * page in response headers */
@@ -23,13 +24,15 @@ public class FileTest {
     try {
       outputFile.getParentFile().mkdirs();
       outputFile.createNewFile();
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       throw new RuntimeException(e);
     }
     try (PrintStream printStream = new PrintStream(outputFile)) {
       outputFile.createNewFile();
       printStream.print(response.response);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       throw new RuntimeException(e);
     }
     assertTrue(outputFile.exists());

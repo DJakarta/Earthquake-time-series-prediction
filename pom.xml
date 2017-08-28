@@ -26,6 +26,10 @@
       <artifactId>jfreechart</artifactId>
       <version>1.0.13</version>
     </dependency>
-
+    <dependency>
+      <groupId>com.github.jrachiele</groupId>
+      <artifactId>timeseries</artifactId>
+      <version>0.3</version>
+    </dependency>
   </dependencies>
 </project>

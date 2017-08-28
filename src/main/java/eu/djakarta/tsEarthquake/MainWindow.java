@@ -10,13 +10,14 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -34,17 +35,14 @@ import org.jfree.chart.event.ChartChangeEvent;
 import org.jfree.chart.event.ChartChangeListener;
 import org.jfree.chart.event.PlotChangeEvent;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
-import org.jfree.chart.plot.Pannable;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.Range;
-import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYBarDataset;
 import org.jfree.data.xy.XYDataset;
-
-import com.sun.org.apache.bcel.internal.generic.NEW;
 
 public class MainWindow {
   public final ChartPanel mainChartPanel = new PannableZoomableChartPanel(null);
@@ -56,10 +54,12 @@ public class MainWindow {
   public boolean mainChartPanelPlotSynchronizationChange = false;
   public boolean predictionChartPanelPlotSynchronizationChange = false;
   public boolean shiftDownOnFrame = false;
+  public final List<Prediction> predictionList = new LinkedList<>();
 
   public MainWindow() {
     this.addCloseBindings(frame);
     this.addKeyListeners();
+    this.addPredictions();
 
     // Add the graphs
     Container graphContainer = new Container();
@@ -71,6 +71,10 @@ public class MainWindow {
     this.contentPane.add(this.rightSide, BorderLayout.EAST);
     frame.pack();
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+  }
+
+  private void addPredictions() {
+    this.predictionList.add(new SimplePrediction());
   }
 
   private void addKeyListeners() {
@@ -86,11 +90,32 @@ public class MainWindow {
     AbstractAction shiftUpAction = new MainWindow.ShiftUpAction();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true), "shiftUp");
     actionMap.put("shiftUp", shiftUpAction);
+    
+    this.addPredictionKeyListeners();
+  }
+
+  private void addPredictionKeyListeners() {
+    JComponent frame = this.frame.getRootPane();
+    InputMap inputMap = frame.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+    ActionMap actionMap = frame.getActionMap();
+    
+    /* TODO programmatically add for each key */
+    AbstractAction predict1Action = new MainWindow.PredictAction(1);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, 0), "predict1");
+    actionMap.put("predict1", predict1Action);
+    
+    AbstractAction predict2Action = new MainWindow.PredictAction(2);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_2, 0), "predict2");
+    actionMap.put("predict2", predict2Action);
+    
+    AbstractAction predict3Action = new MainWindow.PredictAction(3);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_3, 0), "predict3");
+    actionMap.put("predict3", predict3Action);
   }
 
   private void addCharts(Container graphContainer) {
-    DefaultXYDataset defaultXYDataset = new DefaultXYDataset();
-    XYBarDataset xyBarDataset = new XYBarDataset(defaultXYDataset, 0.9);
+    TimeSeriesCollection timeSeriesCollection = new TimeSeriesCollection();
+    XYBarDataset xyBarDataset = new XYBarDataset(timeSeriesCollection, App.barWidth);
 
     this.mainChartPanel.setChart(App.mainChart);
     graphContainer.add(this.mainChartPanel);
@@ -103,9 +128,14 @@ public class MainWindow {
     // this.mainChartPanel.getChart().getXYPlot().setRangePannable(true);
     this.mainChartPanel.getChart().addChangeListener(new MainWindow.SynchronizationListener());
 
+    Range initialDomainRange =
+        this.mainChartPanel.getChart().getXYPlot().getDomainAxis().getRange();
+    Range initialRangeRange = this.mainChartPanel.getChart().getXYPlot().getRangeAxis().getRange();
+
     JFreeChart predictionChart = ChartFactory.createXYBarChart("Prediction", null, true, null,
-        new XYBarDataset(App.databaseEventSet.getXYDataset(), 24 * 60 * 60 * 1000 * 0.8),
-        PlotOrientation.VERTICAL, false, true, false);
+        xyBarDataset, PlotOrientation.VERTICAL, false, true, false);
+    predictionChart.getXYPlot().getDomainAxis().setRange(initialDomainRange);
+    predictionChart.getXYPlot().getRangeAxis().setRange(initialRangeRange);
     this.predictionChartPanel.setChart(predictionChart);
     graphContainer.add(this.predictionChartPanel);
     this.setCommonChartPanelProperties(this.predictionChartPanel);
@@ -115,6 +145,8 @@ public class MainWindow {
 
     JFreeChart componentsChart = ChartFactory.createXYBarChart("Prediction components", null, true,
         null, xyBarDataset, PlotOrientation.VERTICAL, false, true, false);
+    componentsChart.getXYPlot().getDomainAxis().setRange(initialDomainRange);
+    componentsChart.getXYPlot().getRangeAxis().setRange(initialRangeRange);
     this.componentsChartPanel.setChart(componentsChart);
     graphContainer.add(this.componentsChartPanel);
     this.setCommonChartPanelProperties(this.componentsChartPanel);
@@ -137,7 +169,7 @@ public class MainWindow {
     renderer.setShadowVisible(false);
 
     DateAxis axis = (DateAxis) plot.getDomainAxis();
-    axis.setDateFormatOverride(new SimpleDateFormat("YY-MM-dd-hh-mm"));
+    axis.setDateFormatOverride(new SimpleDateFormat("YY-MM-dd"));
     plot.getRenderer().setBaseToolTipGenerator(new MainWindow.MainChartToolTipGenerator());
     plot.setDomainPannable(true);
   }
@@ -254,8 +286,12 @@ public class MainWindow {
             Range rangeX = ev.getChart().getXYPlot().getDomainAxis().getRange();
             App.window.predictionChartPanel.getChart().getXYPlot().getDomainAxis().setRange(rangeX,
                 true, true);
+            App.window.componentsChartPanel.getChart().getXYPlot().getDomainAxis().setRange(rangeX,
+                true, true);
             Range rangeY = ev.getChart().getXYPlot().getRangeAxis().getRange();
             App.window.predictionChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY,
+                true, true);
+            App.window.componentsChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY,
                 true, true);
             App.window.predictionChartPanelPlotSynchronizationChange = false;
 
@@ -267,8 +303,12 @@ public class MainWindow {
             Range rangeX = ev.getChart().getXYPlot().getDomainAxis().getRange();
             App.window.mainChartPanel.getChart().getXYPlot().getDomainAxis().setRange(rangeX, true,
                 true);
+            App.window.componentsChartPanel.getChart().getXYPlot().getDomainAxis().setRange(rangeX, true,
+                true);
             Range rangeY = ev.getChart().getXYPlot().getRangeAxis().getRange();
             App.window.mainChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY, true,
+                true);
+            App.window.componentsChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY, true,
                 true);
             App.window.mainChartPanelPlotSynchronizationChange = false;
           }
@@ -291,6 +331,28 @@ public class MainWindow {
         App.window.shiftDownOnFrame = true;
         // App.window.mainChartPanel.getChart().getXYPlot().setDomainPannable(false);
         // App.window.mainChartPanel.getChart().getXYPlot().setRangePannable(true);
+      }
+    }
+  }
+
+  public static class PredictAction extends AbstractAction {
+    private static final long serialVersionUID = -4109724432146726883L;
+    public final int action;
+
+    public PredictAction(int action) {
+      this.action = action;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent actionEvent) {
+      if (App.window.predictionList.size() > this.action - 1) {
+        Prediction prediction = App.window.predictionList.get(this.action - 1);
+        System.out.println("Called prediction number " + this.action + " ("
+            + prediction.getClass().getSimpleName() + ").");
+        App.predict(prediction);
+      }
+      else {
+        System.out.println("No prediction set on number " + this.action + ".");
       }
     }
   }
