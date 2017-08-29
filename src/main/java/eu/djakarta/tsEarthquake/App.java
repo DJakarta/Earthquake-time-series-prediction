@@ -38,6 +38,6 @@ public class App {
   }
 
   public static void predict(Prediction prediction) {
-    prediction.predict(App.databaseEventSet);
+    prediction.predict(App.databaseEventSet, 3 * 365);
   }
 }

@@ -119,8 +119,8 @@ public class MainWindow {
 
     this.mainChartPanel.setChart(App.mainChart);
     graphContainer.add(this.mainChartPanel);
-    this.mainChartPanel.setRangeZoomable(true);
-    this.mainChartPanel.setDomainZoomable(false);
+    this.mainChartPanel.setRangeZoomable(false);
+    this.mainChartPanel.setDomainZoomable(true);
     this.setCommonChartPanelProperties(this.mainChartPanel);
     this.setCommonBarChartStyling(this.mainChartPanel);
     /* TODO fix zoomable and pannable directions. Problem in listener */
