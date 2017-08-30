@@ -40,4 +40,13 @@ public class App {
   public static void predict(Prediction prediction) {
     prediction.predict(App.databaseEventSet, 3 * 365);
   }
+
+  public static String getInstructionsText() {
+    String str = "";
+    str += "<html>";
+    str += "To predict a certain period of time using a registered prediction method, press the "
+        + "prediction keys (1-9).";
+    str += "</html>";
+    return str;
+  }
 }

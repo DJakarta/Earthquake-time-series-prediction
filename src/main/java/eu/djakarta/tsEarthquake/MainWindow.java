@@ -4,7 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.LayoutManager;
 import java.awt.Paint;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -21,11 +23,17 @@ import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -50,11 +58,13 @@ public class MainWindow {
   public final ChartPanel componentsChartPanel = new PannableZoomableChartPanel(null);
   public final JFrame frame = new JFrame("tsEarthquake");
   public final Container contentPane = this.frame.getContentPane();
-  public final JComponent rightSide = new JLabel("test right side");
+  public final JComponent rightInstructionLabel = new JLabel(App.getInstructionsText());
   public boolean mainChartPanelPlotSynchronizationChange = false;
   public boolean predictionChartPanelPlotSynchronizationChange = false;
   public boolean shiftDownOnFrame = false;
   public final List<Prediction> predictionList = new LinkedList<>();
+  public Color mainForegroundColor = new Color(70, 70, 70);
+  public Color highlightsColor = new Color(40, 40, 40);
 
   public MainWindow() {
     this.addCloseBindings(frame);
@@ -62,13 +72,24 @@ public class MainWindow {
     this.addPredictions();
 
     // Add the graphs
-    Container graphContainer = new Container();
+    JPanel graphContainer = new JPanel();
     graphContainer.setLayout(new GridLayout(3, 1));
     contentPane.add(graphContainer, BorderLayout.CENTER);
     this.addCharts(graphContainer);
 
     // Add the right side
-    this.contentPane.add(this.rightSide, BorderLayout.EAST);
+    Box rightSide = new Box(BoxLayout.Y_AXIS);
+    rightSide.add(this.rightInstructionLabel);
+    rightSide.setBackground(new Color(0, 0, 0));
+    rightSide.setOpaque(true);
+    rightSide.setBorder(new LineBorder(this.highlightsColor, 2));
+    this.rightInstructionLabel.setBackground(new Color(0, 0, 0));
+    this.rightInstructionLabel.setOpaque(true);
+    this.rightInstructionLabel.setPreferredSize(new Dimension(300, 150));
+    this.rightInstructionLabel.setForeground(mainForegroundColor);
+    this.rightInstructionLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+    this.contentPane.add(rightSide, BorderLayout.EAST);
+    System.out.println();
     frame.pack();
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
   }
@@ -90,7 +111,7 @@ public class MainWindow {
     AbstractAction shiftUpAction = new MainWindow.ShiftUpAction();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true), "shiftUp");
     actionMap.put("shiftUp", shiftUpAction);
-    
+
     this.addPredictionKeyListeners();
   }
 
@@ -98,16 +119,16 @@ public class MainWindow {
     JComponent frame = this.frame.getRootPane();
     InputMap inputMap = frame.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
     ActionMap actionMap = frame.getActionMap();
-    
+
     /* TODO programmatically add for each key */
     AbstractAction predict1Action = new MainWindow.PredictAction(1);
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_1, 0), "predict1");
     actionMap.put("predict1", predict1Action);
-    
+
     AbstractAction predict2Action = new MainWindow.PredictAction(2);
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_2, 0), "predict2");
     actionMap.put("predict2", predict2Action);
-    
+
     AbstractAction predict3Action = new MainWindow.PredictAction(3);
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_3, 0), "predict3");
     actionMap.put("predict3", predict3Action);
@@ -154,6 +175,7 @@ public class MainWindow {
 
   public void setCommonChartPanelProperties(ChartPanel panel) {
     this.setCommonStyling(panel);
+    panel.setBorder(new LineBorder(this.highlightsColor, 2));
     panel.setPopupMenu(null);
   }
 
@@ -303,13 +325,13 @@ public class MainWindow {
             Range rangeX = ev.getChart().getXYPlot().getDomainAxis().getRange();
             App.window.mainChartPanel.getChart().getXYPlot().getDomainAxis().setRange(rangeX, true,
                 true);
-            App.window.componentsChartPanel.getChart().getXYPlot().getDomainAxis().setRange(rangeX, true,
-                true);
+            App.window.componentsChartPanel.getChart().getXYPlot().getDomainAxis().setRange(rangeX,
+                true, true);
             Range rangeY = ev.getChart().getXYPlot().getRangeAxis().getRange();
             App.window.mainChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY, true,
                 true);
-            App.window.componentsChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY, true,
-                true);
+            App.window.componentsChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY,
+                true, true);
             App.window.mainChartPanelPlotSynchronizationChange = false;
           }
         }
