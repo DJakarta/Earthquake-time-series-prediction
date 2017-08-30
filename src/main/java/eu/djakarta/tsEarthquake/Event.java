@@ -43,4 +43,10 @@ public class Event {
     return "Event [magnitude=" + magnitude + ", time=" + DatatypeConverter.printDateTime(calendar)
         + ", latitude=" + latitude + ", longitude=" + longitude + ", depth=" + depth + "]";
   }
+
+  public static Date dayToDate(Day day) {
+    Calendar calendar = new GregorianCalendar();
+    calendar.set(day.getYear(), day.getMonth() - 1, day.getDayOfMonth());
+    return calendar.getTime();
+  }
 }

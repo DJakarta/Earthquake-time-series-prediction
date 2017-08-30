@@ -27,6 +27,21 @@ public class EventSet {
     this.normalizedTimeAscendingList.sort(new TimeEventComparator());
   }
 
+  public EventSet(double[] magnitudes, Day firstDay) {
+    this(EventSet.seriesToEventList(magnitudes, firstDay));
+  }
+
+  private static List<Event> seriesToEventList(double[] magnitudes, Day firstDay) {
+    LinkedList<Event> list = new LinkedList<>();
+    Day currentDay = firstDay;
+    for (int i = 0; i < magnitudes.length; i++) {
+      Event event = new Event(magnitudes[i], Event.dayToDate(currentDay), 0, 0, 0);
+      currentDay = (Day) currentDay.next();
+      list.add(event);
+    }
+    return list;
+  }
+
   public static List<Event> normalizeList(List<Event> timeAscendingList) {
     List<Event> list = new LinkedList<>();
     for (int i = 0; i < timeAscendingList.size(); i++) {
@@ -62,7 +77,7 @@ public class EventSet {
     return Collections.unmodifiableList(this.normalizedTimeAscendingList);
   }
 
-  public XYDataset getXYDataset() {
+  public XYDataset getXYBarDataset() {
     TimeSeriesCollection dataset = new TimeSeriesCollection();
     dataset.addSeries(this.getTimeSeries());
     XYBarDataset barDataset = new XYBarDataset(dataset, App.barWidth);
@@ -76,27 +91,26 @@ public class EventSet {
     }
     return timeSeries;
   }
-  
+
   public Event firstEvent() {
     /* TODO fix empty event set problems */
     return this.timeAscendingList.get(0);
   }
-  
+
   public Event lastEvent() {
     return this.timeAscendingList.get(this.timeAscendingList.size() - 1);
   }
-  
+
   public Date firstTime() {
     return this.firstEvent().time;
   }
-  
+
   public Date lastTime() {
     return this.lastEvent().time;
   }
 
   public double[] getNormalizeMagnitudeSeries() {
-    double[] magnitudeSeries =
-        new double[this.lastEvent().daysDifference(this.firstEvent()) + 1];
+    double[] magnitudeSeries = new double[this.lastEvent().daysDifference(this.firstEvent()) + 1];
     for (int i = 0; i < normalizedTimeAscendingList.size(); i++) {
       int pos = this.normalizedTimeAscendingList.get(i).daysDifference(this.firstEvent());
       magnitudeSeries[pos] = normalizedTimeAscendingList.get(i).magnitude;

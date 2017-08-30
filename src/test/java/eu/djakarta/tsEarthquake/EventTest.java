@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.Date;
 
+import org.jfree.data.time.Day;
 import org.junit.Test;
 
 public class EventTest {
@@ -40,5 +41,19 @@ public class EventTest {
     assertEquals(0, event2.daysDifference(event1));
     assertEquals(1, event3.daysDifference(event1));
     assertEquals(3, event4.daysDifference(event1));
+  }
+  
+  @Test
+  public void dayToDateTest() {
+    Date date1 = new Date(1000 * 60 * 60 * 24 * 3 + 2 * 1000);
+    Day day1 = new Day(date1);
+    Day next = (Day) day1.next();
+    
+    Date date2 = new Date(1000 * 60 * 60 * 24 * 4 + 2 * 60 * 1000);
+    Day day2 = new Day(date2);
+    Day reconverted = new Day(Event.dayToDate(day2));
+    
+    assertEquals(next, day2);
+    assertEquals(day2, reconverted);
   }
 }

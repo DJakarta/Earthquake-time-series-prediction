@@ -96,7 +96,7 @@ public class MainWindow {
   }
 
   private void addPredictions() {
-    this.predictionList.add(new SimplePrediction());
+    this.predictionList.add(new SimpleAutomaticPrediction(App.rPath));
   }
 
   private void addKeyListeners() {
@@ -165,8 +165,8 @@ public class MainWindow {
     this.predictionChartPanel.getChart()
         .addChangeListener(new MainWindow.SynchronizationListener());
 
-    JFreeChart componentsChart = ChartFactory.createXYBarChart("Prediction components", null, true,
-        null, xyBarDataset, PlotOrientation.VERTICAL, false, true, false);
+    JFreeChart componentsChart = ChartFactory.createTimeSeriesChart("Prediction components", null,
+        null, timeSeriesCollection, false, true, false);
     componentsChart.getXYPlot().getDomainAxis().setRange(initialDomainRange);
     componentsChart.getXYPlot().getRangeAxis().setRange(initialRangeRange);
     this.componentsChartPanel.setChart(componentsChart);
@@ -188,8 +188,6 @@ public class MainWindow {
 
     XYPlot plot = (XYPlot) panel.getChart().getPlot();
     plot.setBackgroundPaint(backgroundPaint);
-    XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
-    renderer.setShadowVisible(false);
 
     DateAxis axis = (DateAxis) plot.getDomainAxis();
     axis.setDateFormatOverride(new SimpleDateFormat("YY-MM-dd"));
@@ -204,6 +202,7 @@ public class MainWindow {
     Color barPaint = new Color(100, 100, 60);
     renderer.setSeriesPaint(0, barPaint);
     renderer.setBarPainter(barPainter);
+    renderer.setShadowVisible(false);
   }
 
   public void display() {
@@ -314,8 +313,9 @@ public class MainWindow {
             Range rangeY = ev.getChart().getXYPlot().getRangeAxis().getRange();
             App.window.predictionChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY,
                 true, true);
-            App.window.componentsChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY,
-                true, true);
+            Range componentsRangeY = new Range(-rangeY.getUpperBound(), rangeY.getUpperBound());
+            App.window.componentsChartPanel.getChart().getXYPlot().getRangeAxis()
+                .setRange(componentsRangeY, true, true);
             App.window.predictionChartPanelPlotSynchronizationChange = false;
 
           }
@@ -331,8 +331,9 @@ public class MainWindow {
             Range rangeY = ev.getChart().getXYPlot().getRangeAxis().getRange();
             App.window.mainChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY, true,
                 true);
-            App.window.componentsChartPanel.getChart().getXYPlot().getRangeAxis().setRange(rangeY,
-                true, true);
+            Range componentsRangeY = new Range(-rangeY.getUpperBound(), rangeY.getUpperBound());
+            App.window.componentsChartPanel.getChart().getXYPlot().getRangeAxis()
+                .setRange(componentsRangeY, true, true);
             App.window.mainChartPanelPlotSynchronizationChange = false;
           }
         }

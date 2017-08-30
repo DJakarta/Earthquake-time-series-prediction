@@ -7,12 +7,21 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYBarDataset;
 
+/* TODO add filtering subset of events and mouse interaction for filtering */
+/* TODO add prediction summary */
+/* TODO add trendline to simple auto prediction */
+/* TODO add prediction loading and settings (rPath, etc) */
+/* TODO add Romania earthquakes to database */
+/* TODO add custom database download */
+/* TODO package and test package */
+
 public class App {
   public static MainWindow window;
   public static EventSet databaseEventSet;
   public static EventDatabase database;
   public static JFreeChart mainChart;
   public static double barWidth = 24 * 60 * 60 * 1000 * 0.8;
+  public static String rPath = "";
 
   public static void main(String[] args) {
     App.database = new XmlEventDatabase("src/main/resources/database.xml");
@@ -30,7 +39,8 @@ public class App {
   }
 
   private static void loadDatabaseEventsInMainChart() {
-    XYBarDataset databaseDataset = new XYBarDataset(App.databaseEventSet.getXYDataset(), barWidth);
+    XYBarDataset databaseDataset =
+        new XYBarDataset(App.databaseEventSet.getXYBarDataset(), barWidth);
 
     App.mainChart = ChartFactory.createXYBarChart("Events in the database", null, true, null,
         databaseDataset, PlotOrientation.VERTICAL, false, true, false);
