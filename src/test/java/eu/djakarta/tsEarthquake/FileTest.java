@@ -1,11 +1,11 @@
 package eu.djakarta.tsEarthquake;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Date;
 
 import org.junit.Test;
 

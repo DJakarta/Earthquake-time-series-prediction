@@ -12,7 +12,7 @@ public class SimplePrediction implements Prediction {
     App.window.componentsChartPanel.getChart().getXYPlot()
         .setDataset(App.databaseEventSet.getXYDataset());
 
-    File predictionInputFile = new File("simplePredictionInput.txt");
+    File predictionInputFile = new File("/scripts/simplePredictionInput.txt");
     if (!predictionInputFile.exists()) {
       try {
         predictionInputFile.createNewFile();

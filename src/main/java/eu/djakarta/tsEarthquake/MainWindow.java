@@ -6,7 +6,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.LayoutManager;
 import java.awt.Paint;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -31,7 +30,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
@@ -77,7 +75,10 @@ public class MainWindow {
     contentPane.add(graphContainer, BorderLayout.CENTER);
     this.addCharts(graphContainer);
 
-    // Add the right side
+    this.addRightSide();
+  }
+
+  public void addRightSide() {
     Box rightSide = new Box(BoxLayout.Y_AXIS);
     rightSide.add(this.rightInstructionLabel);
     rightSide.setBackground(new Color(0, 0, 0));
