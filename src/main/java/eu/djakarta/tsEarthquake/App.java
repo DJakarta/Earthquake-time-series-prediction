@@ -14,7 +14,6 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYBarDataset;
 
-/* TODO add prediction summary */
 /* TODO add trendline to simple auto prediction */
 /* TODO add prediction loading and settings (rPath, etc) */
 /* TODO add Romania earthquakes to database */
@@ -37,7 +36,7 @@ public class App {
   public static String consoleString = "";
 
   public static void main(String[] args) {
-    App.database = new XmlEventDatabase("src/main/resources/database.xml");
+    App.database = new XmlEventDatabase("db/database.xml");
     List<Event> eventList = database.getEventList();
     App.log("Loaded " + eventList.size() + " events from the database.");
     App.log("Date range of loaded events: " + eventList.get(eventList.size() - 1).time
