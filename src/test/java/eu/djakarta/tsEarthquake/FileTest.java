@@ -14,7 +14,7 @@ public class FileTest {
   public void fileDownloadTest() {
     // String server = "http://service.iris.edu/fdsnws/event/1/query?";
     String server = "http://www.isc.ac.uk/fdsnws/event/1/query?";
-    String query = "minmagnitude=1&starttime=2015-01-01&endtime=2017-08-29";
+    String query = "minmagnitude=1&starttime=2017-08-01&endtime=2017-08-29";
     query += "&minlatitude=43&maxlatitude=49&minlongitude=19&maxlongitude=30";
 
     /* TODO implement response progress; the server returns the length of the
