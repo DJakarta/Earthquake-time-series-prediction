@@ -32,10 +32,10 @@ public class EventTest {
     Event event3 = new Event(0, date3, 0, 0, 0);
     Event event4 = new Event(0, date4, 0, 0, 0);
     
-    // System.out.println(date1);
-    // System.out.println(date2);
-    // System.out.println(date3);
-    // System.out.println(date4);
+    // App.log(date1);
+    // App.log(date2);
+    // App.log(date3);
+    // App.log(date4);
 
     assertEquals(0, event1.daysDifference(event1));
     assertEquals(0, event2.daysDifference(event1));

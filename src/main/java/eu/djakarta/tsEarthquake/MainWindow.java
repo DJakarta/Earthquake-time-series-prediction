@@ -14,6 +14,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,14 +31,18 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartMouseEvent;
+import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.entity.XYItemEntity;
 import org.jfree.chart.event.ChartChangeEvent;
 import org.jfree.chart.event.ChartChangeListener;
 import org.jfree.chart.event.PlotChangeEvent;
@@ -57,12 +63,14 @@ public class MainWindow {
   public final JFrame frame = new JFrame("tsEarthquake");
   public final Container contentPane = this.frame.getContentPane();
   public final JComponent rightInstructionLabel = new JLabel(App.getInstructionsText());
+  public final JLabel console = App.console;
   public boolean mainChartPanelPlotSynchronizationChange = false;
   public boolean predictionChartPanelPlotSynchronizationChange = false;
   public boolean shiftDownOnFrame = false;
   public final List<Prediction> predictionList = new LinkedList<>();
   public Color mainForegroundColor = new Color(70, 70, 70);
   public Color highlightsColor = new Color(40, 40, 40);
+  public static Color barColor = new Color(50, 50, 30);
 
   public MainWindow() {
     this.addCloseBindings(frame);
@@ -89,8 +97,17 @@ public class MainWindow {
     this.rightInstructionLabel.setPreferredSize(new Dimension(300, 150));
     this.rightInstructionLabel.setForeground(mainForegroundColor);
     this.rightInstructionLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+
+    this.console.setBackground(new Color(0, 0, 0));
+    this.console.setOpaque(true);
+    this.console.setPreferredSize(new Dimension(300, 150));
+    this.console.setForeground(mainForegroundColor);
+    this.console.setBorder(new EmptyBorder(5, 5, 5, 5));
+    JScrollPane consoleScroller = new JScrollPane(this.console,
+        JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    rightSide.add(consoleScroller);
+
     this.contentPane.add(rightSide, BorderLayout.EAST);
-    System.out.println();
     frame.pack();
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
   }
@@ -112,6 +129,22 @@ public class MainWindow {
     AbstractAction shiftUpAction = new MainWindow.ShiftUpAction();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true), "shiftUp");
     actionMap.put("shiftUp", shiftUpAction);
+
+    AbstractAction sDownAction = new MainWindow.SelectionDownAction(KeyEvent.VK_S);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0), "sDown");
+    actionMap.put("sDown", sDownAction);
+
+    AbstractAction sUpAction = new MainWindow.SelectionUpAction(KeyEvent.VK_S);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0, true), "sUp");
+    actionMap.put("sUp", sUpAction);
+
+    AbstractAction eDownAction = new MainWindow.SelectionDownAction(KeyEvent.VK_E);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, 0), "eDown");
+    actionMap.put("eDown", eDownAction);
+
+    AbstractAction eUpAction = new MainWindow.SelectionUpAction(KeyEvent.VK_E);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, 0, true), "eUp");
+    actionMap.put("eUp", eUpAction);
 
     this.addPredictionKeyListeners();
   }
@@ -145,6 +178,7 @@ public class MainWindow {
     this.mainChartPanel.setDomainZoomable(true);
     this.setCommonChartPanelProperties(this.mainChartPanel);
     this.setCommonBarChartStyling(this.mainChartPanel);
+    this.mainChartPanel.addChartMouseListener(new MouseRangeSelectionListener());
     /* TODO fix zoomable and pannable directions. Problem in listener */
     // this.mainChartPanel.getChart().getXYPlot().setDomainPannable(true);
     // this.mainChartPanel.getChart().getXYPlot().setRangePannable(true);
@@ -166,7 +200,7 @@ public class MainWindow {
         .addChangeListener(new MainWindow.SynchronizationListener());
 
     JFreeChart componentsChart = ChartFactory.createTimeSeriesChart("Prediction components", null,
-        null, timeSeriesCollection, false, true, false);
+        null, timeSeriesCollection, true, true, false);
     componentsChart.getXYPlot().getDomainAxis().setRange(initialDomainRange);
     componentsChart.getXYPlot().getRangeAxis().setRange(initialRangeRange);
     this.componentsChartPanel.setChart(componentsChart);
@@ -183,7 +217,7 @@ public class MainWindow {
   public void setCommonStyling(ChartPanel panel) {
     Paint backgroundPaint = Color.BLACK;
     panel.getChart().setBackgroundPaint(backgroundPaint);
-    Color titleColor = new Color(50, 50, 30);
+    Color titleColor = this.barColor;
     panel.getChart().getTitle().setPaint(titleColor);
 
     XYPlot plot = (XYPlot) panel.getChart().getPlot();
@@ -238,7 +272,7 @@ public class MainWindow {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      System.out.println("Detected CTRL/CMD + W.");
+      App.log("Detected CTRL/CMD + W.");
       if (window != null) {
         window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
       }
@@ -266,7 +300,7 @@ public class MainWindow {
   public static class WindowClosedListener extends WindowAdapter {
     @Override
     public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-      System.out.println("Closed window.");
+      App.log("Closed window.");
     }
   }
 
@@ -371,12 +405,12 @@ public class MainWindow {
     public void actionPerformed(ActionEvent actionEvent) {
       if (App.window.predictionList.size() > this.action - 1) {
         Prediction prediction = App.window.predictionList.get(this.action - 1);
-        System.out.println("Called prediction number " + this.action + " ("
+        App.log("Called prediction number " + this.action + " ("
             + prediction.getClass().getSimpleName() + ").");
         App.predict(prediction);
       }
       else {
-        System.out.println("No prediction set on number " + this.action + ".");
+        App.log("No prediction set on number " + this.action + ".");
       }
     }
   }
@@ -392,6 +426,76 @@ public class MainWindow {
         // App.window.mainChartPanel.getChart().getXYPlot().setDomainPannable(true);
         // App.window.mainChartPanel.getChart().getXYPlot().setRangePannable(false);
       }
+    }
+  }
+
+  public static class SelectionDownAction extends AbstractAction {
+    private static final long serialVersionUID = 1535923848506198759L;
+    private int key;
+
+    public SelectionDownAction(int key) {
+      this.key = key;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent actionEvent) {
+      if (this.key == KeyEvent.VK_S) {
+        App.startSelection = true;
+        App.endSelection = false;
+      }
+      else if (this.key == KeyEvent.VK_E) {
+        App.startSelection = false;
+        App.endSelection = true;
+      }
+    }
+  }
+
+  public static class SelectionUpAction extends AbstractAction {
+    private static final long serialVersionUID = 1535923848506198759L;
+    private int key;
+
+    public SelectionUpAction(int key) {
+      this.key = key;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent actionEvent) {
+      if (this.key == KeyEvent.VK_S) {
+        App.startSelection = false;
+        App.endSelection = false;
+      }
+      else if (this.key == KeyEvent.VK_E) {
+        App.startSelection = false;
+        App.endSelection = false;
+      }
+    }
+  }
+
+  public static class MouseRangeSelectionListener implements ChartMouseListener {
+
+    @Override
+    public void chartMouseClicked(ChartMouseEvent ev) {
+      if (ev.getEntity() instanceof XYItemEntity) {
+        XYItemEntity entity = (XYItemEntity) ev.getEntity();
+        if (entity.getSeriesIndex() == 0) {
+          entity.setItem(entity.getItem() + App.selectionEventSet.firstEvent()
+              .daysDifference(App.databaseEventSet.firstEvent()));
+        }
+        if (App.startSelection && (App.selectionEndEntity == null
+            || App.selectionEndEntity.getItem() > entity.getItem())) {
+          App.selectionStartEntity = entity;
+          App.select();
+        }
+        else if (App.endSelection && (App.selectionStartEntity == null
+            || App.selectionStartEntity.getItem() < entity.getItem())) {
+          App.selectionEndEntity = entity;
+          App.select();
+        }
+      }
+    }
+
+    @Override
+    public void chartMouseMoved(ChartMouseEvent ev) {
     }
   }
 }

@@ -11,6 +11,8 @@ pred = forecast(model, h = predictionLength);
 outputSeries = as.numeric(pred$mean);
 
 componentRes = residuals(model);
+print(model$arma);
+print(model);
 
 result = c(length(outputSeries), outputSeries, length(componentRes), componentRes);
 write(result, file = "simpleAutomaticPrediction.out", ncolumns = 1);

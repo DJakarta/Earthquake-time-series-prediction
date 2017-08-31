@@ -84,7 +84,7 @@ public class EventXmlHandler extends DefaultHandler {
         this.list.add(new Event(this.magnitude, time, this.latitude, this.longitude, this.depth));
       }
       else {
-        System.out.println("Skipping encountered event with attribute missing.");
+        App.log("Skipping encountered event with attribute missing.");
       }
     }
     else if (qName.equalsIgnoreCase("value")) {

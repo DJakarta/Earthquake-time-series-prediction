@@ -24,9 +24,9 @@ public class SimpleAutomaticPrediction implements Prediction {
 
   @Override
   public void predict(EventSet eventSet, int predictionLength) {
-    App.window.componentsChartPanel.getChart().getXYPlot()
-        .setDataset(App.databaseEventSet.getXYBarDataset());
-
+    App.log("Attempting automatic prediction...");
+    App.log("A model of (0, 0, 0) means that there is not enough correlation in the data. "
+        + "This indicates no seasonality.");
     String directoryName = "scripts";
     String inputFileName = "simpleAutomaticPrediction.in";
     File predictionInputFile = this.createScriptInputFile(directoryName, inputFileName);
@@ -44,6 +44,9 @@ public class SimpleAutomaticPrediction implements Prediction {
     App.window.predictionChartPanel.getChart().getXYPlot().setDataset(predicted.getXYBarDataset());
     App.window.componentsChartPanel.getChart().getXYPlot()
         .setDataset(new TimeSeriesCollection(this.residualsToTimeSeries(eventSet)));
+    
+    App.log("Warning: A model of ARIMA(0, 0, 0) means that there is not enough correlation in the data. "
+        + "This indicates no seasonality.");
 
     this.cleanup(predictionInputFile, predictionOutputFile);
   }
@@ -62,7 +65,7 @@ public class SimpleAutomaticPrediction implements Prediction {
     try {
       String string =
           this.executeCommand("cmd /c Rscript simpleAutomaticPrediction.R", directoryName);
-      System.out.println(string);
+      App.log(string);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -72,13 +75,26 @@ public class SimpleAutomaticPrediction implements Prediction {
   public String executeCommand(String command, String workingDirectory) throws IOException {
     Runtime runtime = Runtime.getRuntime();
     Process process = runtime.exec(command, null, new File(workingDirectory));
-    InputStream inputStream = process.getErrorStream();
+    InputStream errorStream = process.getErrorStream();
+    this.logErrorStream(errorStream);
+    InputStream inputStream = process.getInputStream();
     Scanner scanner1 = new Scanner(inputStream);
     Scanner scanner2 = scanner1.useDelimiter("\\A");
     String output = scanner2.hasNext() ? scanner2.next() : "";
     scanner1.close();
     scanner2.close();
     return output;
+  }
+
+  public void logErrorStream(InputStream errorStream) {
+    if (errorStream != null) {
+      Scanner scanner1 = new Scanner(errorStream);
+      Scanner scanner2 = scanner1.useDelimiter("\\A");
+      String output = scanner2.hasNext() ? scanner2.next() : "";
+      scanner1.close();
+      scanner2.close();
+      App.log(output);
+    }
   }
 
   private void cleanup(File predictionInputFile, File predictionOutputFile) {
@@ -99,7 +115,7 @@ public class SimpleAutomaticPrediction implements Prediction {
       }
 
       int residualsLength = predictionOutput.nextInt();
-      System.out.println(residualsLength);
+      App.log(residualsLength);
       this.residuals = new double[residualsLength];
       for (int i = 0; i < residualsLength; i++) {
         this.residuals[i] = predictionOutput.nextDouble();
