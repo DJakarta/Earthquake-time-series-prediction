@@ -25,8 +25,10 @@ public class SimpleAutomaticPrediction implements Prediction {
   @Override
   public void predict(EventSet eventSet, int predictionLength) {
     App.log("Attempting automatic prediction...");
-    App.log("A model of (0, 0, 0) means that there is not enough correlation in the data. "
-        + "This indicates no seasonality.");
+    String info = "A model of (0, 0, 0) means that there is not enough correlation in the data. "
+        + "This indicates no seasonality. A fairly straight line or big residuals also mean that"
+        + "there is no seasonal trend.";
+    App.log(info);
     String directoryName = "scripts";
     String inputFileName = "simpleAutomaticPrediction.in";
     File predictionInputFile = this.createScriptInputFile(directoryName, inputFileName);
@@ -45,8 +47,7 @@ public class SimpleAutomaticPrediction implements Prediction {
     App.window.componentsChartPanel.getChart().getXYPlot()
         .setDataset(new TimeSeriesCollection(this.residualsToTimeSeries(eventSet)));
     
-    App.log("Warning: A model of ARIMA(0, 0, 0) means that there is not enough correlation in the data. "
-        + "This indicates no seasonality.");
+    App.log("Warning: " + info);
 
     this.cleanup(predictionInputFile, predictionOutputFile);
   }
@@ -115,7 +116,6 @@ public class SimpleAutomaticPrediction implements Prediction {
       }
 
       int residualsLength = predictionOutput.nextInt();
-      App.log(residualsLength);
       this.residuals = new double[residualsLength];
       for (int i = 0; i < residualsLength; i++) {
         this.residuals[i] = predictionOutput.nextDouble();
@@ -131,7 +131,7 @@ public class SimpleAutomaticPrediction implements Prediction {
     try (PrintStream predictionInput =
         new PrintStream(new FileOutputStream(predictionInputFile, false))) {
       predictionInput.println(predictionLength);
-      double[] series = eventSet.getNormalizeMagnitudeSeries();
+      double[] series = eventSet.getFilledNormalizedMagnitudeSeries();
       for (int i = 0; i < series.length; i++) {
         predictionInput.println(series[i]);
       }

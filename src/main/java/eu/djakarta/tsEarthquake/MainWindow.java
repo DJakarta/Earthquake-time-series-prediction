@@ -1,6 +1,8 @@
 package eu.djakarta.tsEarthquake;
 
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
+import java.awt.CheckboxGroup;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -9,7 +11,10 @@ import java.awt.GridLayout;
 import java.awt.Paint;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -18,6 +23,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,12 +33,20 @@ import javax.swing.ActionMap;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
+import javax.swing.SpinnerDateModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
@@ -63,7 +77,7 @@ public class MainWindow {
   public final JFrame frame = new JFrame("tsEarthquake");
   public final Container contentPane = this.frame.getContentPane();
   public final JComponent rightInstructionLabel = new JLabel(App.getInstructionsText());
-  public final JLabel console = App.console;
+  public final JTextPane console = App.console;
   public boolean mainChartPanelPlotSynchronizationChange = false;
   public boolean predictionChartPanelPlotSynchronizationChange = false;
   public boolean shiftDownOnFrame = false;
@@ -71,6 +85,22 @@ public class MainWindow {
   public Color mainForegroundColor = new Color(70, 70, 70);
   public Color highlightsColor = new Color(40, 40, 40);
   public static Color barColor = new Color(50, 50, 30);
+  public LineBorder basicBorder = new LineBorder(this.highlightsColor, 2);
+  public JSpinner predictionLengthSpinner;
+  public JTextField serverAddressTextField;
+  public JSpinner minMagnitudeSpinner;
+  public JSpinner maxMagnitudeSpinner;
+  public JSpinner startDateSpinner;
+  public JSpinner endDateSpinner;
+  public Box dbBox;
+  public JSpinner minLatitudeSpinner;
+  public JSpinner maxLatitudeSpinner;
+  public JSpinner minLongitudeSpinner;
+  public JSpinner maxLongitudeSpinner;
+  public Checkbox checkboxRomania;
+  public Checkbox checkboxCustom;
+  public Container graphContainer;
+  private boolean hasSelectionListener = false;
 
   public MainWindow() {
     this.addCloseBindings(frame);
@@ -78,38 +108,261 @@ public class MainWindow {
     this.addPredictions();
 
     // Add the graphs
-    JPanel graphContainer = new JPanel();
+    this.graphContainer = new JPanel();
     graphContainer.setLayout(new GridLayout(3, 1));
     contentPane.add(graphContainer, BorderLayout.CENTER);
     this.addCharts(graphContainer);
 
     this.addRightSide();
+
+    frame.pack();
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
   }
 
   public void addRightSide() {
     Box rightSide = new Box(BoxLayout.Y_AXIS);
-    rightSide.add(this.rightInstructionLabel);
     rightSide.setBackground(new Color(0, 0, 0));
     rightSide.setOpaque(true);
-    rightSide.setBorder(new LineBorder(this.highlightsColor, 2));
-    this.rightInstructionLabel.setBackground(new Color(0, 0, 0));
-    this.rightInstructionLabel.setOpaque(true);
-    this.rightInstructionLabel.setPreferredSize(new Dimension(300, 150));
-    this.rightInstructionLabel.setForeground(mainForegroundColor);
-    this.rightInstructionLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
+    this.addInstructionBox(rightSide);
+    this.addDatabaseBox(rightSide);
+    this.addConsole(rightSide);
+
+    this.contentPane.add(rightSide, BorderLayout.EAST);
+
+    App.log("GUI Layout completed.");
+  }
+
+  public void addConsole(Box rightSide) {
+    this.console.setEditable(false);
+    this.console.setContentType("text/html");
     this.console.setBackground(new Color(0, 0, 0));
     this.console.setOpaque(true);
-    this.console.setPreferredSize(new Dimension(300, 150));
+    this.console.setPreferredSize(new Dimension(500, 0));
     this.console.setForeground(mainForegroundColor);
     this.console.setBorder(new EmptyBorder(5, 5, 5, 5));
     JScrollPane consoleScroller = new JScrollPane(this.console,
         JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    consoleScroller.setBorder(this.basicBorder);
     rightSide.add(consoleScroller);
+  }
 
-    this.contentPane.add(rightSide, BorderLayout.EAST);
-    frame.pack();
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+  public void addInstructionBox(Box rightSide) {
+    Box instructionBox = new Box(BoxLayout.Y_AXIS);
+    this.rightInstructionLabel.setBackground(new Color(0, 0, 0));
+    this.rightInstructionLabel.setOpaque(true);
+    this.rightInstructionLabel.setPreferredSize(new Dimension(500, 110));
+    this.rightInstructionLabel.setForeground(mainForegroundColor);
+    this.rightInstructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    instructionBox.add(this.rightInstructionLabel);
+
+    Integer value = new Integer(100);
+    Integer min = new Integer(0);
+    Integer max = new Integer(5 * 365);
+    Integer step = new Integer(1);
+    SpinnerNumberModel numberModel = new SpinnerNumberModel(value, min, max, step);
+    this.predictionLengthSpinner = new JSpinner(numberModel);
+    this.predictionLengthSpinner.setPreferredSize(new Dimension(50, 20));
+    this.predictionLengthSpinner.setMaximumSize(new Dimension(200, 20));
+
+    JLabel predictionLengthTextLabel = new JLabel("Prediction length:");
+    predictionLengthTextLabel.setForeground(this.mainForegroundColor);
+
+    JButton predictButton =
+        new JButton("Predict using " + this.predictionList.get(0).getClass().getSimpleName());
+    predictButton.addActionListener(new MainWindow.PredictAction(1));
+
+    Box predictionLengthContainer = new Box(BoxLayout.X_AXIS);
+    predictionLengthContainer.add(predictionLengthTextLabel);
+    predictionLengthContainer.add(Box.createRigidArea(new Dimension(5, 0)));
+    predictionLengthContainer.add(predictionLengthSpinner);
+    predictionLengthContainer.add(Box.createRigidArea(new Dimension(5, 0)));
+    predictionLengthContainer.add(predictButton);
+    predictionLengthContainer.setPreferredSize(new Dimension(500, 20));
+    predictionLengthContainer.setMaximumSize(new Dimension(500, 20));
+    instructionBox.setOpaque(true);
+    instructionBox.add(predictionLengthContainer);
+    instructionBox.setBorder(new CompoundBorder(this.basicBorder, new EmptyBorder(5, 5, 5, 5)));
+    instructionBox.setPreferredSize(new Dimension(500, 120));
+
+    rightSide.add(instructionBox);
+  }
+
+  private void addDatabaseBox(Box rightSide) {
+    Box databaseBox = new Box(BoxLayout.Y_AXIS);
+    databaseBox.setOpaque(true);
+    databaseBox.setBorder(this.basicBorder);
+    this.dbBox = databaseBox;
+
+    databaseBox.setBorder(new CompoundBorder(this.basicBorder, new EmptyBorder(5, 5, 5, 5)));
+
+    Box serverInfoContainer = new Box(BoxLayout.X_AXIS);
+    serverInfoContainer.setMaximumSize(new Dimension(500, 30));
+    databaseBox.add(serverInfoContainer);
+
+    JLabel serverAddressLabel = new JLabel("Server address:");
+    serverAddressLabel.setForeground(this.mainForegroundColor);
+    databaseBox.setPreferredSize(new Dimension(300, 30));
+    serverInfoContainer.add(serverAddressLabel);
+    serverAddressLabel.setMaximumSize(new Dimension(500, 30));
+
+    this.serverAddressTextField = new JTextField(App.serverAddress);
+    this.serverAddressTextField.setMaximumSize(new Dimension(500, 20));
+    serverInfoContainer.add(Box.createRigidArea(new Dimension(5, 0)));
+    serverInfoContainer.add(this.serverAddressTextField);
+    this.serverAddressTextField.setPreferredSize(new Dimension(355, 20));
+    databaseBox.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+    this.addQueryParameters(databaseBox);
+
+    rightSide.add(databaseBox);
+
+    databaseBox.setPreferredSize(new Dimension(300, 150));
+    databaseBox.setMinimumSize(new Dimension(300, 170));
+  }
+
+  private void addQueryParameters(Box databaseBox) {
+    JLabel minMagnitudeLabel = new JLabel("Minimum magnitude:");
+    minMagnitudeLabel.setForeground(this.mainForegroundColor);
+    JLabel maxMagnitudeLabel = new JLabel("Maximum magnitude:");
+    maxMagnitudeLabel.setForeground(this.mainForegroundColor);
+    JLabel startDateLabel = new JLabel("Starting date:");
+    startDateLabel.setForeground(this.mainForegroundColor);
+    JLabel endDateLabel = new JLabel("Ending date:");
+    endDateLabel.setForeground(this.mainForegroundColor);
+
+    this.minMagnitudeSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 15, 0.1));
+    this.maxMagnitudeSpinner = new JSpinner(new SpinnerNumberModel(15, 0, 15, 0.1));
+    Date startDate = new Date(0, 1, 1);
+    Date endDate = new Date();
+    this.startDateSpinner =
+        new JSpinner(new SpinnerDateModel(new Date(117, 0, 1), startDate, endDate, Calendar.DAY_OF_MONTH));
+    this.endDateSpinner =
+        new JSpinner(new SpinnerDateModel(endDate, startDate, endDate, Calendar.DAY_OF_MONTH));
+
+    Container basicQueryParameters = new Container();
+    GridLayout gridLayout = new GridLayout(2, 4);
+    gridLayout.setHgap(5);
+    gridLayout.setVgap(5);
+    basicQueryParameters.setLayout(gridLayout);
+    basicQueryParameters.add(minMagnitudeLabel);
+    basicQueryParameters.add(this.minMagnitudeSpinner);
+    basicQueryParameters.add(maxMagnitudeLabel);
+    basicQueryParameters.add(this.maxMagnitudeSpinner);
+    basicQueryParameters.add(startDateLabel);
+    basicQueryParameters.add(this.startDateSpinner);
+    basicQueryParameters.add(endDateLabel);
+    basicQueryParameters.add(this.endDateSpinner);
+    basicQueryParameters.setPreferredSize(new Dimension(500, 60));
+    basicQueryParameters.setMaximumSize(new Dimension(500, 60));
+    databaseBox.add(Box.createRigidArea(new Dimension(0, 5)));
+    databaseBox.add(basicQueryParameters);
+
+    JLabel regionLabel = new JLabel("Select region:");
+    regionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    databaseBox.add(Box.createRigidArea(new Dimension(0, 5)));
+    databaseBox.add(regionLabel);
+
+    databaseBox.add(Box.createRigidArea(new Dimension(0, 5)));
+    Container checkboxContainer = new Container();
+    checkboxContainer.setLayout(new GridLayout(1, 2));
+    CheckboxGroup checkboxes = new CheckboxGroup();
+    this.checkboxRomania = new Checkbox("Romania", checkboxes, true);
+    checkboxContainer.add(this.checkboxRomania);
+    this.checkboxRomania.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent ev) {
+        Checkbox item = (Checkbox) ev.getSource();
+        if (item.getState()) {
+          App.window.enableFields();
+        }
+      }
+    });
+    this.checkboxRomania.setPreferredSize(new Dimension(200, 30));
+    this.checkboxCustom = new Checkbox("custom", checkboxes, false);
+    checkboxContainer.add(this.checkboxCustom);
+    this.checkboxCustom.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent ev) {
+        Checkbox item = (Checkbox) ev.getSource();
+        if (item.getState()) {
+          App.window.disableFields();
+        }
+      }
+    });
+    this.checkboxCustom.setMaximumSize(new Dimension(200, 30));
+    databaseBox.add(checkboxContainer);
+    checkboxContainer.setMaximumSize(new Dimension(500, 30));
+
+    JLabel minLatitudeLabel = new JLabel("Minimum latitude:");
+    minLatitudeLabel.setForeground(this.mainForegroundColor);
+    JLabel maxLatitudeLabel = new JLabel("Maximum latitude:");
+    maxLatitudeLabel.setForeground(this.mainForegroundColor);
+    JLabel minLongitudeLabel = new JLabel("Minimum longitude:");
+    minLongitudeLabel.setForeground(this.mainForegroundColor);
+    JLabel maxLongitudeLabel = new JLabel("Maximum longitude:");
+    maxLongitudeLabel.setForeground(this.mainForegroundColor);
+
+    this.minLatitudeSpinner =
+        new JSpinner(new SpinnerNumberModel(App.minRomaniaLatitude, -90, 90, 0.1));
+    this.maxLatitudeSpinner =
+        new JSpinner(new SpinnerNumberModel(App.maxRomaniaLatitude, -90, 90, 0.1));
+    this.minLongitudeSpinner =
+        new JSpinner(new SpinnerNumberModel(App.minRomaniaLongitude, -180, 180, 0.1));
+    this.maxLongitudeSpinner =
+        new JSpinner(new SpinnerNumberModel(App.maxRomaniaLongitude, -180, 180, 0.1));
+
+    Container regionParameters = new Container();
+    GridLayout regionGridLayout = new GridLayout(2, 4);
+    regionGridLayout.setHgap(5);
+    regionGridLayout.setVgap(5);
+    regionParameters.setLayout(regionGridLayout);
+    regionParameters.add(minLatitudeLabel);
+    regionParameters.add(this.minLatitudeSpinner);
+    regionParameters.add(maxLatitudeLabel);
+    regionParameters.add(this.maxLatitudeSpinner);
+    regionParameters.add(minLongitudeLabel);
+    regionParameters.add(this.minLongitudeSpinner);
+    regionParameters.add(maxLongitudeLabel);
+    regionParameters.add(this.maxLongitudeSpinner);
+    regionParameters.setPreferredSize(new Dimension(500, 60));
+    regionParameters.setMaximumSize(new Dimension(500, 60));
+    this.minLatitudeSpinner.setEnabled(false);
+    this.maxLatitudeSpinner.setEnabled(false);
+    this.minLongitudeSpinner.setEnabled(false);
+    this.maxLongitudeSpinner.setEnabled(false);
+    databaseBox.add(Box.createRigidArea(new Dimension(0, 5)));
+    databaseBox.add(regionParameters);
+
+    Container buttonContainer = new Container();
+    buttonContainer.setLayout(new GridLayout(1, 2));
+    
+    JButton requestButton = new JButton("Update local database");
+    requestButton.addActionListener(new MainWindow.RequestAction());
+    buttonContainer.add(requestButton);
+    requestButton.setMaximumSize(new Dimension(200, 20));
+    
+    JButton loadButton = new JButton("Load data from the local databse");
+    loadButton.addActionListener(new MainWindow.LoadAction());
+    buttonContainer.add(loadButton);
+    loadButton.setMaximumSize(new Dimension(200, 20));
+    
+    databaseBox.add(Box.createRigidArea(new Dimension(0, 5)));
+    databaseBox.add(buttonContainer);
+  }
+
+  protected void enableFields() {
+    this.minLatitudeSpinner.setEnabled(false);
+    this.maxLatitudeSpinner.setEnabled(false);
+    this.minLongitudeSpinner.setEnabled(false);
+    this.maxLongitudeSpinner.setEnabled(false);
+  }
+
+  protected void disableFields() {
+    this.minLatitudeSpinner.setEnabled(true);
+    this.maxLatitudeSpinner.setEnabled(true);
+    this.minLongitudeSpinner.setEnabled(true);
+    this.maxLongitudeSpinner.setEnabled(true);
   }
 
   private void addPredictions() {
@@ -172,17 +425,7 @@ public class MainWindow {
     TimeSeriesCollection timeSeriesCollection = new TimeSeriesCollection();
     XYBarDataset xyBarDataset = new XYBarDataset(timeSeriesCollection, App.barWidth);
 
-    this.mainChartPanel.setChart(App.mainChart);
-    graphContainer.add(this.mainChartPanel);
-    this.mainChartPanel.setRangeZoomable(false);
-    this.mainChartPanel.setDomainZoomable(true);
-    this.setCommonChartPanelProperties(this.mainChartPanel);
-    this.setCommonBarChartStyling(this.mainChartPanel);
-    this.mainChartPanel.addChartMouseListener(new MouseRangeSelectionListener());
-    /* TODO fix zoomable and pannable directions. Problem in listener */
-    // this.mainChartPanel.getChart().getXYPlot().setDomainPannable(true);
-    // this.mainChartPanel.getChart().getXYPlot().setRangePannable(true);
-    this.mainChartPanel.getChart().addChangeListener(new MainWindow.SynchronizationListener());
+    addMainChart(graphContainer);
 
     Range initialDomainRange =
         this.mainChartPanel.getChart().getXYPlot().getDomainAxis().getRange();
@@ -208,9 +451,26 @@ public class MainWindow {
     this.setCommonChartPanelProperties(this.componentsChartPanel);
   }
 
+  public void addMainChart(Container graphContainer) {
+    this.mainChartPanel.setChart(App.mainChart);
+    graphContainer.add(this.mainChartPanel);
+    this.mainChartPanel.setRangeZoomable(false);
+    this.mainChartPanel.setDomainZoomable(true);
+    this.setCommonChartPanelProperties(this.mainChartPanel);
+    this.setCommonBarChartStyling(this.mainChartPanel);
+    if (!this.hasSelectionListener) {
+      this.mainChartPanel.addChartMouseListener(new MouseRangeSelectionListener());
+      this.hasSelectionListener = true;
+    }
+    /* TODO fix zoomable and pannable directions. Problem in listener */
+    // this.mainChartPanel.getChart().getXYPlot().setDomainPannable(true);
+    // this.mainChartPanel.getChart().getXYPlot().setRangePannable(true);
+    this.mainChartPanel.getChart().addChangeListener(new MainWindow.SynchronizationListener());
+  }
+
   public void setCommonChartPanelProperties(ChartPanel panel) {
     this.setCommonStyling(panel);
-    panel.setBorder(new LineBorder(this.highlightsColor, 2));
+    panel.setBorder(this.basicBorder);
     panel.setPopupMenu(null);
   }
 
@@ -229,7 +489,7 @@ public class MainWindow {
     plot.setDomainPannable(true);
   }
 
-  private void setCommonBarChartStyling(ChartPanel panel) {
+  public void setCommonBarChartStyling(ChartPanel panel) {
     XYPlot plot = (XYPlot) panel.getChart().getPlot();
     XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
     StandardXYBarPainter barPainter = new StandardXYBarPainter();
@@ -245,10 +505,10 @@ public class MainWindow {
 
   private void addCloseBindings(JFrame frame) {
     frame.getRootPane().getActionMap().put("close-window", new MainWindow.CloseAction(frame));
-    frame.getRootPane().getInputMap(JComponent.WHEN_FOCUSED)
+    frame.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
         .put(KeyStroke.getKeyStroke("control W"), "close-window");
-    frame.getRootPane().getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("meta W"),
-        "close-window");
+    frame.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+        .put(KeyStroke.getKeyStroke("meta W"), "close-window");
 
     frame.addWindowListener(new MainWindow.WindowClosedListener());
   }
@@ -412,6 +672,24 @@ public class MainWindow {
       else {
         App.log("No prediction set on number " + this.action + ".");
       }
+    }
+  }
+
+  public static class RequestAction extends AbstractAction {
+    private static final long serialVersionUID = 2493007465722653837L;
+
+    @Override
+    public void actionPerformed(ActionEvent actionEvent) {
+      App.requestDatabase();
+    }
+  }
+  
+  public static class LoadAction extends AbstractAction {
+    private static final long serialVersionUID = 7579098820130905698L;
+
+    @Override
+    public void actionPerformed(ActionEvent actionEvent) {
+      App.loadDatabase();
     }
   }
 

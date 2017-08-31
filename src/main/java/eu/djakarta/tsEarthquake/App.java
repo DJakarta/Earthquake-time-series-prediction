@@ -2,10 +2,18 @@ package eu.djakarta.tsEarthquake;
 
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.JLabel;
+import javax.swing.JTextArea;
+import javax.swing.JTextPane;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -32,23 +40,20 @@ public class App {
   public static XYItemEntity selectionStartEntity = null;
   public static XYItemEntity selectionEndEntity = null;
   public static EventSet selectionEventSet;
-  public static JLabel console = new JLabel();
+  public static JTextPane console = new JTextPane();
   public static String consoleString = "";
+  public static String serverAddress = "http://www.isc.ac.uk/fdsnws/event/1/query?";
+  public static double minRomaniaLatitude = 43;
+  public static double maxRomaniaLatitude = 49;
+  public static double minRomaniaLongitude = 19;
+  public static double maxRomaniaLongitude = 30;
 
   public static void main(String[] args) {
     App.database = new XmlEventDatabase("db/database.xml");
-    List<Event> eventList = database.getEventList();
-    App.log("Loaded " + eventList.size() + " events from the database.");
-    App.log("Date range of loaded events: " + eventList.get(eventList.size() - 1).time
-        + " -> " + eventList.get(0).time + ".");
-    App.log("");
-
-    App.databaseEventSet = new EventSet(eventList);
-    App.loadDatabaseEventsInMainChart();
-
-    App.initSelection();
+    App.initialLoadDatabase();
 
     App.window = new MainWindow();
+    App.window.checkboxRomania.requestFocus();
     App.window.display();
   }
 
@@ -60,7 +65,7 @@ public class App {
     App.select();
   }
 
-  private static void loadDatabaseEventsInMainChart() {
+  private static void createMainChart() {
     XYBarDataset databaseDataset =
         new XYBarDataset(App.databaseEventSet.getXYBarDataset(), barWidth);
 
@@ -68,8 +73,12 @@ public class App {
         databaseDataset, PlotOrientation.VERTICAL, false, true, false);
   }
 
+  private static void loadMainChart() {
+    App.window.addMainChart(App.window.graphContainer);
+  }
+
   public static void predict(Prediction prediction) {
-    prediction.predict(App.selectionEventSet, 3 * 365);
+    prediction.predict(App.selectionEventSet, (int) App.window.predictionLengthSpinner.getValue());
   }
 
   public static String getInstructionsText() {
@@ -114,10 +123,77 @@ public class App {
           + App.selectionEventSet.lastTime() + ".");
     }
   }
-  
+
   public static void log(Object object) {
     System.out.println(object);
-    App.consoleString = App.consoleString + "<br />" + object.toString().replace("\n", "<br />");
-    App.console.setText("<html>" + App.consoleString + "</html>");
+    App.consoleString =
+        App.consoleString + "<br /><br />>> " + object.toString().replace("\n", "<br />");
+    App.console.setText("<html><p style=\"color:#505050;font-family:Consolas\">" + App.consoleString
+        + "</p></html>");
+  }
+
+  public static void requestDatabase() {
+    String server = App.window.serverAddressTextField.getText();
+    String query = "";
+    boolean romania = App.window.checkboxRomania.getState();
+    query += "minmagnitude=" + App.window.minMagnitudeSpinner.getValue();
+    query += "&maxmagnitude=" + App.window.maxMagnitudeSpinner.getValue();
+    query += "&minlatitude="
+        + (romania ? App.minRomaniaLatitude : App.window.minLatitudeSpinner.getValue());
+    query += "&maxlatitude="
+        + (romania ? App.maxRomaniaLatitude : App.window.maxLatitudeSpinner.getValue());
+    query += "&minlongitude="
+        + (romania ? App.minRomaniaLongitude : App.window.minLongitudeSpinner.getValue());
+    query += "&maxlongitude="
+        + (romania ? App.maxRomaniaLongitude : App.window.maxLongitudeSpinner.getValue());
+    DateFormat format = new SimpleDateFormat("YYYY-MM-dd");
+    Date startTime = (Date) App.window.startDateSpinner.getValue();
+    query += "&starttime=" + format.format(startTime);
+    Date endTime = (Date) App.window.endDateSpinner.getValue();
+    query += "&endtime=" + format.format(endTime);
+
+    /* TODO implement response progress; the server returns the length of the
+     * page in response headers */
+    HttpRequest request = new HttpRequest(server + query, "GET");
+    App.log("Executing request to " + request.url);
+    HttpResponse response = request.send();
+    App.log(response.code);
+    File outputFile = new File("db/database.xml");
+    try {
+      outputFile.getParentFile().mkdirs();
+      outputFile.createNewFile();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    try (PrintStream printStream = new PrintStream(outputFile)) {
+      outputFile.createNewFile();
+      printStream.print(response.response);
+      if (response.code == 200) {
+        App.log("Downloaded events from server. The updated database is ready to be loaded"
+            + " into the program.");
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static void initialLoadDatabase() {
+    App.log("Loading events from the local database...");
+    List<Event> eventList = database.getEventList();
+    App.log("Loaded " + eventList.size() + " events from the database.");
+    App.log("Date range of loaded events: " + eventList.get(eventList.size() - 1).time + " -> "
+        + eventList.get(0).time + ".");
+
+    App.databaseEventSet = new EventSet(eventList);
+    App.createMainChart();
+
+    App.initSelection();
+  }
+
+  public static void loadDatabase() {
+    App.initialLoadDatabase();
+    App.loadMainChart();
   }
 }

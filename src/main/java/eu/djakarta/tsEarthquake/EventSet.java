@@ -109,12 +109,33 @@ public class EventSet {
     return this.lastEvent().time;
   }
 
-  public double[] getNormalizeMagnitudeSeries() {
+  public double[] getNormalizedMagnitudeSeries() {
     double[] magnitudeSeries = new double[this.lastEvent().daysDifference(this.firstEvent()) + 1];
     for (int i = 0; i < normalizedTimeAscendingList.size(); i++) {
       int pos = this.normalizedTimeAscendingList.get(i).daysDifference(this.firstEvent());
       magnitudeSeries[pos] = normalizedTimeAscendingList.get(i).magnitude;
     }
     return magnitudeSeries;
+  }
+  
+  public double[] getFilledNormalizedMagnitudeSeries() {
+    return EventSet.fillGaps(this.getNormalizedMagnitudeSeries());
+  }
+
+  private static double[] fillGaps(double[] normalizedMagnitudeSeries) {
+    int j;
+    for (int i = 0; i < normalizedMagnitudeSeries.length - 1; i++) {
+      j = i + 1;
+      while (normalizedMagnitudeSeries[j] == 0) {
+        j++;
+      }
+      double average = (normalizedMagnitudeSeries[i] + normalizedMagnitudeSeries[j]) / 2;
+      j = i + 1;
+      while (normalizedMagnitudeSeries[j] == 0) {
+        normalizedMagnitudeSeries[j] = average;
+        j++;
+      }
+    }
+    return normalizedMagnitudeSeries;
   }
 }
