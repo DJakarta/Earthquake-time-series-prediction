@@ -11,7 +11,6 @@ import java.awt.GridLayout;
 import java.awt.Paint;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -19,8 +18,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -40,10 +37,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.CompoundBorder;
@@ -141,8 +138,9 @@ public class MainWindow {
     this.console.setPreferredSize(new Dimension(500, 0));
     this.console.setForeground(mainForegroundColor);
     this.console.setBorder(new EmptyBorder(5, 5, 5, 5));
-    JScrollPane consoleScroller = new JScrollPane(this.console,
-        JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    JScrollPane consoleScroller =
+        new JScrollPane(this.console, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     consoleScroller.setBorder(this.basicBorder);
     rightSide.add(consoleScroller);
   }
@@ -235,8 +233,8 @@ public class MainWindow {
     this.maxMagnitudeSpinner = new JSpinner(new SpinnerNumberModel(15, 0, 15, 0.1));
     Date startDate = new Date(0, 1, 1);
     Date endDate = new Date();
-    this.startDateSpinner =
-        new JSpinner(new SpinnerDateModel(new Date(117, 0, 1), startDate, endDate, Calendar.DAY_OF_MONTH));
+    this.startDateSpinner = new JSpinner(
+        new SpinnerDateModel(new Date(117, 0, 1), startDate, endDate, Calendar.DAY_OF_MONTH));
     this.endDateSpinner =
         new JSpinner(new SpinnerDateModel(endDate, startDate, endDate, Calendar.DAY_OF_MONTH));
 
@@ -336,17 +334,17 @@ public class MainWindow {
 
     Container buttonContainer = new Container();
     buttonContainer.setLayout(new GridLayout(1, 2));
-    
+
     JButton requestButton = new JButton("Update local database");
     requestButton.addActionListener(new MainWindow.RequestAction());
     buttonContainer.add(requestButton);
     requestButton.setMaximumSize(new Dimension(200, 20));
-    
+
     JButton loadButton = new JButton("Load data from the local databse");
     loadButton.addActionListener(new MainWindow.LoadAction());
     buttonContainer.add(loadButton);
     loadButton.setMaximumSize(new Dimension(200, 20));
-    
+
     databaseBox.add(Box.createRigidArea(new Dimension(0, 5)));
     databaseBox.add(buttonContainer);
   }
@@ -477,7 +475,7 @@ public class MainWindow {
   public void setCommonStyling(ChartPanel panel) {
     Paint backgroundPaint = Color.BLACK;
     panel.getChart().setBackgroundPaint(backgroundPaint);
-    Color titleColor = this.barColor;
+    Color titleColor = MainWindow.barColor;
     panel.getChart().getTitle().setPaint(titleColor);
 
     XYPlot plot = (XYPlot) panel.getChart().getPlot();
@@ -683,7 +681,7 @@ public class MainWindow {
       App.requestDatabase();
     }
   }
-  
+
   public static class LoadAction extends AbstractAction {
     private static final long serialVersionUID = 7579098820130905698L;
 
