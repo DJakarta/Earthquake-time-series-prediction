@@ -38,7 +38,7 @@ public class SimpleAutomaticPrediction implements Prediction {
     File predictionOutputFile = new File(directoryName + "/" + outputFileName);
     this.writeToScriptInputFile(eventSet, predictionLength, predictionInputFile);
 
-    //this.callRScript(directoryName);
+    this.callRScript(directoryName);
 
     this.readFromScriptOutputFile(predictionOutputFile);
     Day firstDay = new Day(new Date(eventSet.lastTime().getTime() + 24 * 60 * 60 * 1000));
