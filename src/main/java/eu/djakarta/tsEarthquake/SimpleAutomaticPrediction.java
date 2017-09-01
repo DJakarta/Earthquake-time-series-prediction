@@ -1,12 +1,14 @@
 package eu.djakarta.tsEarthquake;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Scanner;
 
 import org.jfree.data.time.Day;
@@ -36,7 +38,7 @@ public class SimpleAutomaticPrediction implements Prediction {
     File predictionOutputFile = new File(directoryName + "/" + outputFileName);
     this.writeToScriptInputFile(eventSet, predictionLength, predictionInputFile);
 
-    this.callRScript(directoryName);
+    //this.callRScript(directoryName);
 
     this.readFromScriptOutputFile(predictionOutputFile);
     Day firstDay = new Day(new Date(eventSet.lastTime().getTime() + 24 * 60 * 60 * 1000));
@@ -108,7 +110,7 @@ public class SimpleAutomaticPrediction implements Prediction {
   }
 
   private void readFromScriptOutputFile(File predictionOutputFile) {
-    try (Scanner predictionOutput = new Scanner(predictionOutputFile)) {
+    try (Scanner predictionOutput = new Scanner(predictionOutputFile).useLocale(Locale.US)) {
       int seriesLength = predictionOutput.nextInt();
       this.series = new double[seriesLength];
       for (int i = 0; i < seriesLength; i++) {
